@@ -1,12 +1,13 @@
-version: '3.8'
+# 我们移除了过时的 'version' 标签，以消除警告
 
 services:
   mosquitto:
-    image: eclipse-mosquitto:2
+    build: ./mosquitto
     container_name: mosquitto_broker
+    networks:
+      - ems-net
     ports:
       - "127.0.0.1:1883:1883"
-      - "127.0.0.1:9001:9001"
     volumes:
       - mosquitto_data:/mosquitto/data
       - mosquitto_log:/mosquitto/log
@@ -14,6 +15,8 @@ services:
   influxdb:
     image: influxdb:2.7
     container_name: influxdb_tsdb
+    networks:
+      - ems-net
     ports:
       - "127.0.0.1:8086:8086"
     volumes:
@@ -28,6 +31,8 @@ services:
   data-ingestion-service:
     build: ./data-ingestion-service
     container_name: backend_service
+    networks:
+      - ems-net
     ports:
       - "3001:3001"
     depends_on:
@@ -38,9 +43,16 @@ services:
   device-simulator:
     build: ./device-simulator
     container_name: device_simulator
+    networks:
+      - ems-net
     depends_on:
       - mosquitto
     restart: on-failure
+
+# 这里是之前缺失的关键部分：定义我们名叫 ems-net 的网络
+networks:
+  ems-net:
+    driver: bridge
 
 volumes:
   mosquitto_data:
